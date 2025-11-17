@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Footbox Analytics - Demo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: system-ui, sans-serif; margin:0; background:#0b1220; color:#e5e7eb; }
+    header { padding:1rem 1.5rem; border-bottom:1px solid #1f2937; display:flex; justify-content:space-between; align-items:center; }
+    h1 { font-size:1.3rem; }
+    main { padding:1.5rem; max-width:980px; margin:0 auto; }
+    .controls { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; margin-bottom:1.5rem; }
+    select, button { padding:.5rem .8rem; border-radius:.5rem; border:1px solid #4b5563; background:#020617; color:#e5e7eb; }
+    button { cursor:pointer; }
+    button:hover { border-color:#f97316; color:#f97316; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; }
+    .card {
+      background:#020617;
+      border-radius:.75rem;
+      padding:1rem;
+      border:1px solid #111827;
+      min-height:120px;
+    }
+    .card-title { font-size:.8rem; text-transform:uppercase; letter-spacing:.1em; color:#9ca3af; }
+    .value { font-size:1.4rem; font-weight:600; margin:.5rem 0; }
+    .bar-container { height:8px; background:#111827; border-radius:999px; overflow:hidden; margin-top:.4rem; }
+    .bar { height:100%; background:linear-gradient(90deg,#f97316,#fb923c); width:0; transition:width .5s ease; }
+    .meta { font-size:.8rem; color:#9ca3af; }
+
+    /* ===== Scoreboard match ===== */
+    .scoreboard {
+      margin:0 1.25rem 1.25rem;
+      padding:.8rem 1.2rem .9rem;
+      background:#020617;
+      border-bottom:1px solid #111827;
+      display:flex;
+      flex-direction:column;
+      gap:.35rem;
+    }
+    .scoreboard-main {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1.5rem;
+      font-weight:600;
+    }
+    .scoreboard-side {
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      flex:1;
+      min-width:0;
+    }
+    .scoreboard-side.home { justify-content:flex-start; }
+    .scoreboard-side.away { justify-content:flex-end; }
+    .scoreboard-team-name {
+      font-size:.95rem;
+      color:#f9fafb;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .scoreboard-logo {
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      background:#020617;
+      border:1px solid #1f2937;
+      object-fit:cover;
+      flex-shrink:0;
+    }
+    .scoreboard-center {
+      display:flex;
+      align-items:center;
+      gap:.45rem;
+      font-weight:700;
+      letter-spacing:.05em;
+    }
+    .scoreboard-score {
+      font-size:1.5rem;
+      color:#f9fafb;
+    }
+    .scoreboard-dash {
+      font-size:1.2rem;
+      color:#e5e7eb;
+    }
+    .scoreboard-status {
+      text-align:center;
+      font-size:.8rem;
+      color:#9ca3af;
+    }
+
+    .lineups {
+      margin-top:2rem;
+      padding-top:1.5rem;
+      border-top:1px solid #1f2937;
+    }
+    .lineups-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:1rem;
+    }
+    .lineups-title {
+      font-size:1.05rem;
+      font-weight:600;
+    }
+    .lineups-hint {
+      font-size:.8rem;
+      color:#9ca3af;
+    }
+    .lineups-controls {
+      display:flex;
+      align-items:center;
+      gap:.4rem;
+      font-size:.75rem;
+      color:#9ca3af;
+    }
+    .lineups-controls button {
+      padding:.1rem .4rem;
+      border-radius:.25rem;
+      border:1px solid #4b5563;
+      background:#020617;
+      color:#e5e7eb;
+      cursor:pointer;
+      font-size:.75rem;
+    }
+    .lineups-controls button:hover {
+      border-color:#f97316;
+      color:#f97316;
+    }
+    .pitch-wrapper {
+      background:#020617;
+      border-radius:1rem;
+      border:1px solid #111827;
+      padding:1rem;
+    }
+    .football-field{
+      position:relative;
+      width:min(980px,88vw);
+      height:80vh;
+      margin:auto;
+      border-radius:10px;
+      background:repeating-linear-gradient(
+        to bottom,
+        #15803d 0,
+        #15803d 20px,
+        #166534 20px,
+        #166534 40px
+      );
+      border:1px solid #303841;
+      overflow:hidden;
+    }
+    .football-field::after{
+      content:"";
+      position:absolute;
+      top:50%;
+      left:0;
+      width:100%;
+      height:2px;
+      background:rgba(255,255,255,.4);
+      transform:translateY(-50%);
+    }
+    .players-half{
+      position:absolute;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-evenly;
+      padding:20px 30px;
+      width:100%;
+    }
+    .home-half{top:0;bottom:50%;}
+    .away-half{top:50%;bottom:0;}
+    .team-banner{
+      text-align:center;
+      text-transform:uppercase;
+      font-size:.85rem;
+      font-weight:600;
+      letter-spacing:.12em;
+      padding:.35rem .75rem;
+      border-radius:.5rem;
+      margin-bottom:.4rem;
+      background:#111827;
+      color:#e5e7eb;
+      box-shadow:0 4px 10px rgba(0,0,0,.45);
+      max-width:260px;
+      margin-inline:auto;
+    }
+    .team-banner.away{
+      top:auto;
+      bottom:18px;
+    }
+    .line-row{
+      display:flex;
+      justify-content:center;
+      gap:45px !important;
+      margin:4px 0;
+    }
+    .player-bubble{
+      position:relative;
+      text-align:center;
+      cursor:pointer;
+      text-decoration:none;
+      color:#e5e7eb;
+      font-size:.8rem;
+      background:transparent;
+      border:none;
+      padding:0;
+    }
+    .bubble{
+      width:64px;
+      height:64px;
+      border-radius:50%;
+      overflow:hidden;
+      background:#020617;
+      border:2px solid #111827;
+      margin:auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:600;
+      font-size:.8rem;
+      box-shadow:0 0 0 2px rgba(15,23,42,.9);
+      transition:.15s;
+    }
+    .bubble img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .player-name{
+      margin-top:6px;
+      font-size:var(--fieldNameSize,0.9rem);
+      font-weight:500;
+      max-width:90px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      text-shadow:1px 1px 2px #000;
+    }
+    .player-bubble:hover .bubble{
+      transform:translateY(-1px) scale(1.03);
+      box-shadow:0 0 0 2px #f97316;
+      border-color:#f97316;
+    }
+    .player-bubble:hover .player-name{
+      color:#f97316;
+    }
+
+    .badge-rating{
+      position:absolute;
+      top:-4px;
+      right:-4px;
+      min-width:20px;
+      height:20px;
+      padding:0 4px;
+      border-radius:999px;
+      background:#f97316; /* valeur par défaut, surchargée en inline */
+      color:#111827;
+      font-size:.7rem;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 0 0 2px #020617;
+    }
+
+    /* ===== Modale de notation joueur ===== */
+    .rating-modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.65);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:40;
+    }
+    .rating-modal{display:none;}
+    .rating-modal.open{display:block;}
+    .rating-modal-panel{
+      background:#020617;
+      border-radius:.9rem;
+      border:1px solid #1f2937;
+      padding:1.25rem 1.4rem;
+      width:100%;
+      max-width:420px;
+      box-shadow:0 20px 60px rgba(0,0,0,.8);
+      color:#e5e7eb;
+    }
+    .rating-modal-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:.75rem;
+    }
+    .rating-modal-title{
+      font-size:1rem;
+      font-weight:600;
+    }
+    .rating-modal-close{
+      border-radius:999px;
+      border:1px solid #4b5563;
+      background:#020617;
+      color:#9ca3af;
+      padding:.2rem .6rem;
+      cursor:pointer;
+      font-size:.8rem;
+    }
+    .rating-modal-close:hover{
+      border-color:#f97316;
+      color:#f97316;
+    }
+    .rating-modal-body label{
+      display:block;
+      font-size:.8rem;
+      color:#9ca3af;
+      margin-bottom:.2rem;
+    }
+    .rating-modal-body input[type="number"],
+    .rating-modal-body textarea{
+      width:100%;
+      border-radius:.5rem;
+      border:1px solid #1f2937;
+      background:#020617;
+      color:#e5e7eb;
+      padding:.4rem .6rem;
+      font-size:.85rem;
+      margin-bottom:.7rem;
+    }
+    .rating-modal-body textarea{min-height:80px;resize:vertical;}
+    .rating-modal-footer{
+      display:flex;
+      justify-content:flex-end;
+      gap:.5rem;
+      margin-top:.4rem;
+    }
+    .btn-secondary{
+      padding:.45rem .9rem;
+      border-radius:.5rem;
+      border:1px solid #4b5563;
+      background:#020617;
+      color:#e5e7eb;
+      font-size:.85rem;
+      cursor:pointer;
+    }
+    .btn-secondary:hover{border-color:#f97316;color:#f97316;}
+    .btn-primary-small{
+      padding:.45rem .9rem;
+      border-radius:.5rem;
+      border:1px solid transparent;
+      background:#f97316;
+      color:#111827;
+      font-weight:600;
+      font-size:.85rem;
+      cursor:pointer;
+    }
+    .btn-primary-small:hover{filter:brightness(1.05);}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Footbox Analytics</h1>
+  <span style="font-size:.85rem;color:#9ca3af;">Projet démo • Stats de match fictives</span>
+</header>
+<main>
+  <section class="controls">
+    <label for="match-select">Match :</label>
+    <select id="match-select">
+      <option value="barca-psg">Barcelona vs Paris SG</option>
+      <option value="strasbourg-om">Strasbourg vs Marseille</option>
+    </select>
+    <span id="status" style="font-size:.8rem;color:#9ca3af;"></span>
+  </section>
+
+  <section class="scoreboard">
+    <div class="scoreboard-main">
+      <div class="scoreboard-side home">
+        <span class="scoreboard-team-name" id="home-full-name"></span>
+        <img class="scoreboard-logo" id="home-logo" alt="Home logo">
+      </div>
+      <div class="scoreboard-center">
+        <span class="scoreboard-score" id="home-score">-</span>
+        <span class="scoreboard-dash">-</span>
+        <span class="scoreboard-score" id="away-score">-</span>
+      </div>
+      <div class="scoreboard-side away">
+        <img class="scoreboard-logo" id="away-logo" alt="Away logo">
+        <span class="scoreboard-team-name" id="away-full-name"></span>
+      </div>
+    </div>
+    <div class="scoreboard-status" id="scoreboard-status"></div>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <div class="card-title">xG (Expected Goals)</div>
+      <div class="value"><span id="xg-home"></span> – <span id="xg-away"></span></div>
+      <div class="meta" id="xg-meta"></div>
+    </article>
+    <article class="card">
+      <div class="card-title">Tirs cadrés</div>
+      <div class="value"><span id="shots-home"></span> – <span id="shots-away"></span></div>
+      <div class="bar-container">
+        <div class="bar" id="bar-shots"></div>
+      </div>
+      <div class="meta" id="shots-meta"></div>
+    </article>
+    <article class="card">
+      <div class="card-title">Possession</div>
+      <div class="value"><span id="pos-home"></span>% – <span id="pos-away"></span>%</div>
+      <div class="bar-container">
+        <div class="bar" id="bar-pos"></div>
+      </div>
+      <div class="meta" id="pos-meta"></div>
+    </article>
+    <article class="card">
+      <div class="card-title">Passes réussies</div>
+      <div class="value"><span id="pass-home"></span>% – <span id="pass-away"></span>%</div>
+      <div class="bar-container">
+        <div class="bar" id="bar-pass"></div>
+      </div>
+      <div class="meta" id="pass-meta"></div>
+    </article>
+  </section>
+
+  <section class="lineups">
+    <div class="lineups-header">
+      <div>
+        <div class="lineups-title">Compositions fictives</div>
+        <div class="lineups-hint">Clique sur un joueur pour ouvrir sa fiche dans Player Notebook.</div>
+      </div>
+      <div class="lineups-controls">
+        <span>Taille noms</span>
+        <button id="fieldFontMinus" type="button">A-</button>
+        <button id="fieldFontPlus" type="button">A+</button>
+      </div>
+    </div>
+    <div class="pitch-wrapper">
+      <div class="team-banner home" id="home-team-name"></div>
+      <div class="football-field">
+        <div class="players-half home-half" id="home-lineup"></div>
+        <div class="players-half away-half" id="away-lineup"></div>
+      </div>
+      <div class="team-banner away" id="away-team-name"></div>
+    </div>
+  </section>
+</main>
+
+<div id="rating-modal" class="rating-modal">
+  <div class="rating-modal-backdrop">
+    <div class="rating-modal-panel">
+      <div class="rating-modal-header">
+        <div>
+          <div class="rating-modal-title" id="rating-player-name">Joueur</div>
+          <div style="font-size:.8rem;color:#9ca3af;" id="rating-player-meta"></div>
+        </div>
+        <button class="rating-modal-close" type="button" id="rating-close">✕</button>
+      </div>
+      <div class="rating-modal-body">
+        <label for="rating-score">Note (/10)</label>
+        <input id="rating-score" type="number" min="0" max="10" step="0.5" />
+        <label for="rating-notes">Notes / commentaires</label>
+        <textarea id="rating-notes"></textarea>
+      </div>
+      <div class="rating-modal-footer">
+        <button class="btn-secondary" type="button" id="rating-cancel">Annuler</button>
+        <button class="btn-primary-small" type="button" id="rating-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+  
+</div>
+
+<script>
+  const matches = {
+    "barca-psg": {
+      label: "Barcelona vs Paris SG",
+      eventId: 14566650
+    },
+    "strasbourg-om": {
+      label: "Strasbourg vs Marseille",
+      eventId: 14065740
+    }
+  };
+
+  // Fallback de stats mockées pour la démo, si l'API ne renvoie rien d'exploitable
+  const mockStats = {
+    "barca-psg": {
+      xg: [2.4, 1.6],
+      shotsOn: [8, 5],
+      poss: [57, 43],
+      pass: [89, 84]
+    },
+    "strasbourg-om": {
+      xg: [1.2, 1.9],
+      shotsOn: [4, 7],
+      poss: [46, 54],
+      pass: [82, 86]
+    }
+  };
+
+  let currentMatchId = "barca-psg";
+
+  const $ = (id) => document.getElementById(id);
+
+  const API_BASE = "https://api.sofascore.com/api/v1";
+
+  async function getJSON(url){
+    const r = await fetch(url, { headers: { "Accept":"application/json" } });
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json();
+  }
+
+  function extractRowsFromGroups(groups){
+    const rows = [];
+    (groups || []).forEach(g => {
+      const list = g.statistics || g.rows || g.items || [];
+      list.forEach(item => {
+        const name = item.name || item.type || item.title || "Stat";
+        const home = item.home ?? item.homeValue ?? item.value?.home ?? item.team1Value ?? 0;
+        const away = item.away ?? item.awayValue ?? item.value?.away ?? item.team2Value ?? 0;
+        rows.push({ name, home, away });
+      });
+    });
+    return rows;
+  }
+
+  async function fetchMatchStats(id){
+    const urls = [
+      `${API_BASE}/event/${id}/statistics`,
+      `${API_BASE}/event/${id}/summary`,
+      `${API_BASE}/event/${id}`,
+      `${API_BASE}/event/${id}/timeline`
+    ];
+    for (const url of urls){
+      try{
+        const data = await getJSON(url);
+        let groups = data?.statistics || data?.groups || data?.statisticsGroups || data?.periods?.fulltime?.statistics;
+        if (Array.isArray(groups) && groups.length) {
+          const rows = extractRowsFromGroups(groups);
+          if (rows.length) return rows;
+        }
+        if (url.endsWith("/timeline") && Array.isArray(data?.incidents)){
+          const inc = data.incidents;
+          const count = (f)=> inc.filter(f).length;
+          const rows = [
+            { name:"Shots On Target", home: count(x=>x.incidentClass==="shotOnTarget" && x.isHome), away: count(x=>x.incidentClass==="shotOnTarget" && x.isAway) }
+          ];
+          if (rows.some(r=>r.home||r.away)) return rows;
+        }
+      }catch(e){ /* continue */ }
+    }
+    return [];
+  }
+
+  function ratingColor(rating){
+    if (typeof rating !== "number" || isNaN(rating)) return "#f97316";
+    const t = Math.max(0, Math.min(10, rating)) / 10; // 0 -> 1
+    // interpolation simple rouge (#ef4444) -> vert (#22c55e)
+    const r = Math.round(0xef + (0x22 - 0xef) * t);
+    const g = Math.round(0x44 + (0xc5 - 0x44) * t);
+    const b = Math.round(0x44 + (0x5e - 0x44) * t);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  function getSavedRating(matchId, player) {
+    const key = `demo_note_${matchId}_${player.name}_${player.club || ""}`;
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) || "null");
+      if (!saved) return null;
+      return typeof saved.rating === "number" ? saved.rating : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function renderLineups(lineups) {
+    if (!lineups) return;
+    const homeTitle = $("home-team-name");
+    const awayTitle = $("away-team-name");
+    const homeContainer = $("home-lineup");
+    const awayContainer = $("away-lineup");
+
+    homeTitle.textContent = lineups.homeTeam.name;
+    awayTitle.textContent = lineups.awayTeam.name;
+
+    const makeDot = (player) => {
+      const params = {
+        name: player.name,
+        position: player.position,
+        club: player.club
+      };
+      const initials = player.name
+        .split(" ")
+        .map(part => part[0])
+        .join("")
+        .slice(0, 3)
+        .toUpperCase();
+
+      const avatarUrl = player.id
+        ? `https://api.sofascore.com/api/v1/player/${player.id}/image`
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(player.name)}&background=0b1220&color=ffffff&size=128&rounded=true`;
+
+      const savedRating = getSavedRating(currentMatchId, player);
+      return `
+        <button class="player-bubble" type="button" data-player='${JSON.stringify(params)}'>
+          ${savedRating != null ? `<div class="badge-rating" style="background:${ratingColor(savedRating)}">${savedRating}</div>` : ""}
+          <div class="bubble"><img src="${avatarUrl}" alt="${initials}"></div>
+          <div class="player-name">${player.name}</div>
+        </button>
+      `;
+    };
+
+    const buildRows = (players) => {
+      const rows = [];
+      const total = players.length;
+
+      if (total <= 4) {
+        rows.push(players);
+      } else if (total === 11) {
+        rows.push([players[0]]);               // gardien
+        rows.push(players.slice(1, 4 + 1));    // 4 défenseurs
+        rows.push(players.slice(5, 7 + 1));    // 3 milieux
+        rows.push(players.slice(8));           // 3 attaquants
+      } else {
+        const size = Math.ceil(total / 4);
+        for (let i = 0; i < total; i += size) {
+          rows.push(players.slice(i, i + size));
+        }
+      }
+
+      return rows
+        .map(line => `<div class="line-row">${line.map(makeDot).join("")}</div>`)
+        .join("");
+    };
+
+    homeContainer.innerHTML = buildRows(lineups.homeTeam.players);
+
+    const awayRowsHtml = buildRows(lineups.awayTeam.players);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${awayRowsHtml}</div>`, "text/html");
+    const rows = Array.from(doc.body.firstChild.children);
+    rows.reverse();
+    awayContainer.innerHTML = rows.map(r => r.outerHTML).join("");
+  }
+
+  async function updateMatch() {
+    const select = $("match-select");
+    const value = select.value;
+    const match = matches[value];
+    if (!match) return;
+
+    currentMatchId = value;
+
+    $("status").textContent = "Chargement Sofascore…";
+
+    try {
+      const [lineupsJson, rows, eventJson] = await Promise.all([
+        getJSON(`${API_BASE}/event/${match.eventId}/lineups`),
+        fetchMatchStats(match.eventId),
+        getJSON(`${API_BASE}/event/${match.eventId}`)
+      ]);
+
+      // Map lineups vers notre format
+      const toTeam = (side) => {
+        const teamName = side.team?.name || "";
+        const players = (side.players || []).filter(p => !p.substitute && !p.isSubstitute).map(p => ({
+          id: p.player.id,
+          name: p.player.name,
+          position: p.position,
+          club: teamName
+        }));
+        return { name: teamName, players };
+      };
+
+      const mappedLineups = {
+        homeTeam: toTeam(lineupsJson.home),
+        awayTeam: toTeam(lineupsJson.away)
+      };
+
+      // Scoreboard (noms complets + logos + statut) à partir de l'event
+      const ev = eventJson.event || eventJson;
+      if (ev && ev.homeTeam && ev.awayTeam) {
+        const homeLogoUrl = `${API_BASE}/team/${ev.homeTeam.id}/image`;
+        const awayLogoUrl = `${API_BASE}/team/${ev.awayTeam.id}/image`;
+        const homeName = ev.homeTeam.name || ev.homeTeam.shortName || "Home";
+        const awayName = ev.awayTeam.name || ev.awayTeam.shortName || "Away";
+
+        const homeScore = ev.homeScore?.current ?? ev.homeScore?.display ?? "-";
+        const awayScore = ev.awayScore?.current ?? ev.awayScore?.display ?? "-";
+
+        $("home-logo").src = homeLogoUrl;
+        $("away-logo").src = awayLogoUrl;
+        $("home-full-name").textContent = homeName;
+        $("away-full-name").textContent = awayName;
+        $("home-score").textContent = homeScore;
+        $("away-score").textContent = awayScore;
+
+        const type = ev.status?.type || "";
+        let label = "";
+        if (type === "finished" || type === "afterextra" || type === "penalties") {
+          label = "Fin du match";
+        } else if (type === "inprogress") {
+          label = "En cours";
+        } else if (type === "notstarted") {
+          label = "Avant match";
+        } else {
+          label = ev.status?.description || "";
+        }
+        const statusEl = $("scoreboard-status");
+        if (statusEl) statusEl.textContent = label;
+      }
+
+      // Stats basiques xG / tirs / possession / passes en réutilisant fetchMatchStats
+      const normalizeValue = (v) => {
+        if (typeof v === "string" && v.trim().endsWith("%")) return parseFloat(v);
+        return Number(v) || 0;
+      };
+
+      const findRow = (patterns) => {
+        const pats = Array.isArray(patterns) ? patterns : [patterns];
+        return rows.find(r => {
+          const n = String(r.name || "").toLowerCase();
+          return pats.some(p => n.includes(p.toLowerCase()));
+        });
+      };
+
+      console.log("Footbox demo – raw stats rows", rows);
+
+      let xgRow    = findRow(["expected goals", "xg"]);
+      let shotsRow = findRow(["shots on target", "shots on goal"]);
+      let possRow  = findRow(["ball possession", "% possession", "possession"]);
+      let passRow  = findRow(["pass success", "pass accuracy", "passes completed"]);
+
+      // Si aucune stat n'a été trouvée, on utilise les valeurs mockées pour ce match
+      if (!xgRow && !shotsRow && !possRow && !passRow && mockStats[value]) {
+        const ms = mockStats[value];
+        xgRow =   { name: "xG",              home: ms.xg[0],      away: ms.xg[1] };
+        shotsRow= { name: "Shots on target", home: ms.shotsOn[0], away: ms.shotsOn[1] };
+        possRow = { name: "Possession",      home: ms.poss[0],    away: ms.poss[1] };
+        passRow = { name: "Pass success",    home: ms.pass[0],    away: ms.pass[1] };
+      }
+
+      const xgHome = xgRow ? normalizeValue(xgRow.home) : 0;
+      const xgAway = xgRow ? normalizeValue(xgRow.away) : 0;
+      $("xg-home").textContent = xgHome.toFixed(2);
+      $("xg-away").textContent = xgAway.toFixed(2);
+      $("xg-meta").textContent = xgHome > xgAway
+        ? "L'équipe à domicile s’est créé les occasions les plus dangereuses."
+        : "Les visiteurs ont été plus menaçants que ce que le score laisse penser.";
+
+      const shotsHome = shotsRow ? normalizeValue(shotsRow.home) : 0;
+      const shotsAway = shotsRow ? normalizeValue(shotsRow.away) : 0;
+      $("shots-home").textContent = shotsHome;
+      $("shots-away").textContent = shotsAway;
+      const totalShots = shotsHome + shotsAway;
+      const shotsRatio = totalShots ? (shotsHome / totalShots) * 100 : 50;
+      $("bar-shots").style.width = shotsRatio + "%";
+      $("shots-meta").textContent = shotsRatio > 60
+        ? "Gros volume de tirs cadrés côté domicile."
+        : "Répartition plus équilibrée des tirs cadrés.";
+
+      const possHome = possRow ? normalizeValue(possRow.home) : 0;
+      const possAway = possRow ? normalizeValue(possRow.away) : 0;
+      $("pos-home").textContent = possHome.toFixed(0);
+      $("pos-away").textContent = possAway.toFixed(0);
+      $("bar-pos").style.width = possHome + "%";
+      $("pos-meta").textContent =
+        possHome > 55 ? "Domination territoriale nette." : "Possession plutôt partagée.";
+
+      const passHome = passRow ? normalizeValue(passRow.home) : 0;
+      const passAway = passRow ? normalizeValue(passRow.away) : 0;
+      $("pass-home").textContent = passHome.toFixed(0);
+      $("pass-away").textContent = passAway.toFixed(0);
+      $("bar-pass").style.width = passHome + "%";
+      $("pass-meta").textContent =
+        passHome > passAway ? "Circulation de balle plus propre côté domicile." : "Meilleure précision côté visiteurs.";
+
+      $("status").textContent = "Données chargées pour " + match.label;
+      renderLineups(mappedLineups);
+    } catch (e) {
+      console.error(e);
+      $("status").textContent = "Erreur de chargement Sofascore";
+    }
+  }
+
+  $("match-select").addEventListener("change", updateMatch);
+  document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const match = params.get("match");
+    if (match && matches[match]) {
+      $("match-select").value = match;
+      currentMatchId = match;
+    }
+    updateMatch();
+
+    // Contrôles de taille de police des noms sur le terrain
+    let fieldFontSize = 0.8;
+    const root = document.documentElement;
+    const applyFontSize = () => {
+      root.style.setProperty("--fieldNameSize", fieldFontSize + "rem");
+    };
+    applyFontSize();
+
+    const minusBtn = $("fieldFontMinus");
+    const plusBtn = $("fieldFontPlus");
+    minusBtn?.addEventListener("click", () => {
+      fieldFontSize = Math.max(0.6, fieldFontSize - 0.05);
+      applyFontSize();
+    });
+    plusBtn?.addEventListener("click", () => {
+      fieldFontSize = Math.min(1.1, fieldFontSize + 0.05);
+      applyFontSize();
+    });
+
+    // Gestion de la modale de notation
+    const modal = $("rating-modal");
+    const scoreInput = $("rating-score");
+    const notesInput = $("rating-notes");
+    const nameEl = $("rating-player-name");
+    const metaEl = $("rating-player-meta");
+
+    let currentPlayerKey = null;
+    let currentPlayerMeta = null;
+
+    const storageKey = (matchId, name, club) => `demo_note_${matchId}_${name}_${club}`;
+
+    function openModal(player) {
+      currentPlayerKey = storageKey(currentMatchId, player.name, player.club || "");
+      currentPlayerMeta = player;
+      nameEl.textContent = player.name;
+      metaEl.textContent = `${player.position || ""}${player.club ? " • " + player.club : ""}`;
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(currentPlayerKey) || "null");
+        if (saved) {
+          scoreInput.value = saved.rating ?? "";
+          notesInput.value = saved.notes ?? "";
+        } else {
+          scoreInput.value = "";
+          notesInput.value = "";
+        }
+      } catch {
+        scoreInput.value = "";
+        notesInput.value = "";
+      }
+
+      modal.classList.add("open");
+      scoreInput.focus();
+    }
+
+    function closeModal() {
+      modal.classList.remove("open");
+      currentPlayerKey = null;
+      currentPlayerMeta = null;
+    }
+
+    $("rating-close")?.addEventListener("click", closeModal);
+    $("rating-cancel")?.addEventListener("click", closeModal);
+
+    // Clamp de la note entre 0 et 10 à chaque saisie
+    scoreInput?.addEventListener("input", () => {
+      let v = parseFloat(scoreInput.value);
+      if (isNaN(v)) return;
+      v = Math.max(0, Math.min(10, v));
+      scoreInput.value = v.toString();
+    });
+
+    $("rating-save")?.addEventListener("click", () => {
+      if (!currentPlayerKey || !currentPlayerMeta) return;
+      let rating = parseFloat(scoreInput.value);
+      const notes = notesInput.value.trim();
+      if (!isNaN(rating)) {
+        rating = Math.max(0, Math.min(10, rating));
+      }
+      const payload = {
+        rating: isNaN(rating) ? null : rating,
+        notes,
+      };
+      try {
+        localStorage.setItem(currentPlayerKey, JSON.stringify(payload));
+      } catch {}
+
+      // Met à jour immédiatement le badge sur la bulle cliquée
+      try {
+        const containers = ["home-lineup", "away-lineup"]; 
+        for (const cid of containers) {
+          const root = $(cid);
+          if (!root) continue;
+          const bubbles = root.querySelectorAll(".player-bubble");
+          bubbles.forEach(b => {
+            const raw = b.getAttribute("data-player");
+            if (!raw) return;
+            const p = JSON.parse(raw);
+            if (p.name === currentPlayerMeta.name && (p.club || "") === (currentPlayerMeta.club || "")) {
+              let badge = b.querySelector(".badge-rating");
+              if (!badge && !isNaN(rating)) {
+                badge = document.createElement("div");
+                badge.className = "badge-rating";
+                b.prepend(badge);
+              }
+              if (badge) {
+                if (isNaN(rating)) {
+                  badge.remove();
+                } else {
+                  badge.textContent = rating.toString();
+                  badge.style.background = ratingColor(rating);
+                }
+              }
+            }
+          });
+        }
+      } catch {}
+      closeModal();
+    });
+
+    const attachClick = (containerId) => {
+      const container = $(containerId);
+      if (!container) return;
+      container.addEventListener("click", (e) => {
+        const btn = e.target.closest(".player-bubble");
+        if (!btn) return;
+        const raw = btn.getAttribute("data-player");
+        if (!raw) return;
+        try {
+          const player = JSON.parse(raw);
+          openModal(player);
+        } catch {}
+      });
+    };
+
+    attachClick("home-lineup");
+    attachClick("away-lineup");
+  });
+</script>
+</body>
+</html>
