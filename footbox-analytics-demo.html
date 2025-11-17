@@ -473,30 +473,107 @@
 </div>
 
 <script>
+  // Données démo 100 % statiques pour GitHub Pages (pas d'appels Sofascore)
   const matches = {
     "barca-psg": {
       label: "Barcelona vs Paris SG",
-      eventId: 14566650
+      scoreboard: {
+        homeName: "Barcelona",
+        awayName: "Paris Saint-Germain",
+        homeScore: 1,
+        awayScore: 2,
+        status: "Fin du match"
+      },
+      stats: {
+        xg: [2.4, 1.6],
+        shotsOn: [8, 5],
+        poss: [57, 43],
+        pass: [89, 84]
+      },
+      lineups: {
+        homeTeam: {
+          name: "Barcelona",
+          players: [
+            { name: "Marc-André ter Stegen", position: "G", club: "Barcelona" },
+            { name: "Jules Koundé", position: "D", club: "Barcelona" },
+            { name: "Ronald Araújo", position: "D", club: "Barcelona" },
+            { name: "Pau Cubarsí", position: "D", club: "Barcelona" },
+            { name: "João Cancelo", position: "D", club: "Barcelona" },
+            { name: "Frenkie de Jong", position: "M", club: "Barcelona" },
+            { name: "İlkay Gündoğan", position: "M", club: "Barcelona" },
+            { name: "Pedri", position: "M", club: "Barcelona" },
+            { name: "Lamine Yamal", position: "A", club: "Barcelona" },
+            { name: "Robert Lewandowski", position: "A", club: "Barcelona" },
+            { name: "Raphinha", position: "A", club: "Barcelona" }
+          ]
+        },
+        awayTeam: {
+          name: "Paris Saint-Germain",
+          players: [
+            { name: "Gianluigi Donnarumma", position: "G", club: "Paris SG" },
+            { name: "Achraf Hakimi", position: "D", club: "Paris SG" },
+            { name: "Marquinhos", position: "D", club: "Paris SG" },
+            { name: "Lucas Beraldo", position: "D", club: "Paris SG" },
+            { name: "Nuno Mendes", position: "D", club: "Paris SG" },
+            { name: "Vitinha", position: "M", club: "Paris SG" },
+            { name: "Warren Zaïre-Emery", position: "M", club: "Paris SG" },
+            { name: "Fabián Ruiz", position: "M", club: "Paris SG" },
+            { name: "Ousmane Dembélé", position: "A", club: "Paris SG" },
+            { name: "Kylian Mbappé", position: "A", club: "Paris SG" },
+            { name: "Randal Kolo Muani", position: "A", club: "Paris SG" }
+          ]
+        }
+      }
     },
     "strasbourg-om": {
       label: "Strasbourg vs Marseille",
-      eventId: 14065740
-    }
-  };
-
-  // Fallback de stats mockées pour la démo, si l'API ne renvoie rien d'exploitable
-  const mockStats = {
-    "barca-psg": {
-      xg: [2.4, 1.6],
-      shotsOn: [8, 5],
-      poss: [57, 43],
-      pass: [89, 84]
-    },
-    "strasbourg-om": {
-      xg: [1.2, 1.9],
-      shotsOn: [4, 7],
-      poss: [46, 54],
-      pass: [82, 86]
+      scoreboard: {
+        homeName: "RC Strasbourg",
+        awayName: "Olympique de Marseille",
+        homeScore: 1,
+        awayScore: 3,
+        status: "Fin du match"
+      },
+      stats: {
+        xg: [1.2, 1.9],
+        shotsOn: [4, 7],
+        poss: [46, 54],
+        pass: [82, 86]
+      },
+      lineups: {
+        homeTeam: {
+          name: "RC Strasbourg",
+          players: [
+            { name: "Matz Sels", position: "G", club: "Strasbourg" },
+            { name: "Lucas Perrin", position: "D", club: "Strasbourg" },
+            { name: "Gerzino Nyamsi", position: "D", club: "Strasbourg" },
+            { name: "Abakar Sylla", position: "D", club: "Strasbourg" },
+            { name: "Marvin Senaya", position: "D", club: "Strasbourg" },
+            { name: "Ibrahima Sissoko", position: "M", club: "Strasbourg" },
+            { name: "Dimitri Liénard", position: "M", club: "Strasbourg" },
+            { name: "Jean-Ricner Bellegarde", position: "M", club: "Strasbourg" },
+            { name: "Adrien Thomasson", position: "A", club: "Strasbourg" },
+            { name: "Habib Diallo", position: "A", club: "Strasbourg" },
+            { name: "Ludovic Ajorque", position: "A", club: "Strasbourg" }
+          ]
+        },
+        awayTeam: {
+          name: "Olympique de Marseille",
+          players: [
+            { name: "Pau López", position: "G", club: "OM" },
+            { name: "Jonathan Clauss", position: "D", club: "OM" },
+            { name: "Chancel Mbemba", position: "D", club: "OM" },
+            { name: "Leonardo Balerdi", position: "D", club: "OM" },
+            { name: "Renan Lodi", position: "D", club: "OM" },
+            { name: "Jordan Veretout", position: "M", club: "OM" },
+            { name: "Geoffrey Kondogbia", position: "M", club: "OM" },
+            { name: "Azzedine Ounahi", position: "M", club: "OM" },
+            { name: "Ismaïla Sarr", position: "A", club: "OM" },
+            { name: "Pierre-Emerick Aubameyang", position: "A", club: "OM" },
+            { name: "Vitinha", position: "A", club: "OM" }
+          ]
+        }
+      }
     }
   };
 
@@ -504,55 +581,7 @@
 
   const $ = (id) => document.getElementById(id);
 
-  const API_BASE = "https://api.sofascore.com/api/v1";
-
-  async function getJSON(url){
-    const r = await fetch(url, { headers: { "Accept":"application/json" } });
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
-    return await r.json();
-  }
-
-  function extractRowsFromGroups(groups){
-    const rows = [];
-    (groups || []).forEach(g => {
-      const list = g.statistics || g.rows || g.items || [];
-      list.forEach(item => {
-        const name = item.name || item.type || item.title || "Stat";
-        const home = item.home ?? item.homeValue ?? item.value?.home ?? item.team1Value ?? 0;
-        const away = item.away ?? item.awayValue ?? item.value?.away ?? item.team2Value ?? 0;
-        rows.push({ name, home, away });
-      });
-    });
-    return rows;
-  }
-
-  async function fetchMatchStats(id){
-    const urls = [
-      `${API_BASE}/event/${id}/statistics`,
-      `${API_BASE}/event/${id}/summary`,
-      `${API_BASE}/event/${id}`,
-      `${API_BASE}/event/${id}/timeline`
-    ];
-    for (const url of urls){
-      try{
-        const data = await getJSON(url);
-        let groups = data?.statistics || data?.groups || data?.statisticsGroups || data?.periods?.fulltime?.statistics;
-        if (Array.isArray(groups) && groups.length) {
-          const rows = extractRowsFromGroups(groups);
-          if (rows.length) return rows;
-        }
-        if (url.endsWith("/timeline") && Array.isArray(data?.incidents)){
-          const inc = data.incidents;
-          const count = (f)=> inc.filter(f).length;
-          const rows = [
-            { name:"Shots On Target", home: count(x=>x.incidentClass==="shotOnTarget" && x.isHome), away: count(x=>x.incidentClass==="shotOnTarget" && x.isAway) }
-          ];
-          if (rows.some(r=>r.home||r.away)) return rows;
-        }
-      }catch(e){ /* continue */ }
-    }
-    return [];
-  }
+  // Plus d'appels API pour la version démo GitHub Pages : tout est statique ci-dessus
 
   function ratingColor(rating){
     if (typeof rating !== "number" || isNaN(rating)) return "#f97316";
@@ -645,7 +674,7 @@
     awayContainer.innerHTML = rows.map(r => r.outerHTML).join("");
   }
 
-  async function updateMatch() {
+  function updateMatch() {
     const select = $("match-select");
     const value = select.value;
     const match = matches[value];
@@ -653,105 +682,40 @@
 
     currentMatchId = value;
 
-    $("status").textContent = "Chargement Sofascore…";
+    $("status").textContent = "Données fictives chargées pour " + match.label;
 
-    try {
-      const [lineupsJson, rows, eventJson] = await Promise.all([
-        getJSON(`${API_BASE}/event/${match.eventId}/lineups`),
-        fetchMatchStats(match.eventId),
-        getJSON(`${API_BASE}/event/${match.eventId}`)
-      ]);
+    // Récupération des données statiques
+    const d = match;
+    const mappedLineups = d.lineups;
 
-      // Map lineups vers notre format
-      const toTeam = (side) => {
-        const teamName = side.team?.name || "";
-        const players = (side.players || []).filter(p => !p.substitute && !p.isSubstitute).map(p => ({
-          id: p.player.id,
-          name: p.player.name,
-          position: p.position,
-          club: teamName
-        }));
-        return { name: teamName, players };
-      };
+    // Scoreboard
+    const sb = d.scoreboard;
+    if (sb) {
+      $("home-full-name").textContent = sb.homeName;
+      $("away-full-name").textContent = sb.awayName;
+      $("home-score").textContent = sb.homeScore;
+      $("away-score").textContent = sb.awayScore;
+      const statusEl = $("scoreboard-status");
+      if (statusEl) statusEl.textContent = sb.status || "";
+    }
 
-      const mappedLineups = {
-        homeTeam: toTeam(lineupsJson.home),
-        awayTeam: toTeam(lineupsJson.away)
-      };
-
-      // Scoreboard (noms complets + logos + statut) à partir de l'event
-      const ev = eventJson.event || eventJson;
-      if (ev && ev.homeTeam && ev.awayTeam) {
-        const homeLogoUrl = `${API_BASE}/team/${ev.homeTeam.id}/image`;
-        const awayLogoUrl = `${API_BASE}/team/${ev.awayTeam.id}/image`;
-        const homeName = ev.homeTeam.name || ev.homeTeam.shortName || "Home";
-        const awayName = ev.awayTeam.name || ev.awayTeam.shortName || "Away";
-
-        const homeScore = ev.homeScore?.current ?? ev.homeScore?.display ?? "-";
-        const awayScore = ev.awayScore?.current ?? ev.awayScore?.display ?? "-";
-
-        $("home-logo").src = homeLogoUrl;
-        $("away-logo").src = awayLogoUrl;
-        $("home-full-name").textContent = homeName;
-        $("away-full-name").textContent = awayName;
-        $("home-score").textContent = homeScore;
-        $("away-score").textContent = awayScore;
-
-        const type = ev.status?.type || "";
-        let label = "";
-        if (type === "finished" || type === "afterextra" || type === "penalties") {
-          label = "Fin du match";
-        } else if (type === "inprogress") {
-          label = "En cours";
-        } else if (type === "notstarted") {
-          label = "Avant match";
-        } else {
-          label = ev.status?.description || "";
-        }
-        const statusEl = $("scoreboard-status");
-        if (statusEl) statusEl.textContent = label;
-      }
-
-      // Stats basiques xG / tirs / possession / passes en réutilisant fetchMatchStats
+    // Stats basiques xG / tirs / possession / passes à partir des valeurs statiques
       const normalizeValue = (v) => {
         if (typeof v === "string" && v.trim().endsWith("%")) return parseFloat(v);
         return Number(v) || 0;
       };
-
-      const findRow = (patterns) => {
-        const pats = Array.isArray(patterns) ? patterns : [patterns];
-        return rows.find(r => {
-          const n = String(r.name || "").toLowerCase();
-          return pats.some(p => n.includes(p.toLowerCase()));
-        });
-      };
-
-      console.log("Footbox demo – raw stats rows", rows);
-
-      let xgRow    = findRow(["expected goals", "xg"]);
-      let shotsRow = findRow(["shots on target", "shots on goal"]);
-      let possRow  = findRow(["ball possession", "% possession", "possession"]);
-      let passRow  = findRow(["pass success", "pass accuracy", "passes completed"]);
-
-      // Si aucune stat n'a été trouvée, on utilise les valeurs mockées pour ce match
-      if (!xgRow && !shotsRow && !possRow && !passRow && mockStats[value]) {
-        const ms = mockStats[value];
-        xgRow =   { name: "xG",              home: ms.xg[0],      away: ms.xg[1] };
-        shotsRow= { name: "Shots on target", home: ms.shotsOn[0], away: ms.shotsOn[1] };
-        possRow = { name: "Possession",      home: ms.poss[0],    away: ms.poss[1] };
-        passRow = { name: "Pass success",    home: ms.pass[0],    away: ms.pass[1] };
-      }
-
-      const xgHome = xgRow ? normalizeValue(xgRow.home) : 0;
-      const xgAway = xgRow ? normalizeValue(xgRow.away) : 0;
+    const s = d.stats;
+    if (s) {
+      const xgHome = normalizeValue(s.xg[0]);
+      const xgAway = normalizeValue(s.xg[1]);
       $("xg-home").textContent = xgHome.toFixed(2);
       $("xg-away").textContent = xgAway.toFixed(2);
       $("xg-meta").textContent = xgHome > xgAway
         ? "L'équipe à domicile s’est créé les occasions les plus dangereuses."
         : "Les visiteurs ont été plus menaçants que ce que le score laisse penser.";
 
-      const shotsHome = shotsRow ? normalizeValue(shotsRow.home) : 0;
-      const shotsAway = shotsRow ? normalizeValue(shotsRow.away) : 0;
+      const shotsHome = normalizeValue(s.shotsOn[0]);
+      const shotsAway = normalizeValue(s.shotsOn[1]);
       $("shots-home").textContent = shotsHome;
       $("shots-away").textContent = shotsAway;
       const totalShots = shotsHome + shotsAway;
@@ -761,28 +725,24 @@
         ? "Gros volume de tirs cadrés côté domicile."
         : "Répartition plus équilibrée des tirs cadrés.";
 
-      const possHome = possRow ? normalizeValue(possRow.home) : 0;
-      const possAway = possRow ? normalizeValue(possRow.away) : 0;
+      const possHome = normalizeValue(s.poss[0]);
+      const possAway = normalizeValue(s.poss[1]);
       $("pos-home").textContent = possHome.toFixed(0);
       $("pos-away").textContent = possAway.toFixed(0);
       $("bar-pos").style.width = possHome + "%";
       $("pos-meta").textContent =
         possHome > 55 ? "Domination territoriale nette." : "Possession plutôt partagée.";
 
-      const passHome = passRow ? normalizeValue(passRow.home) : 0;
-      const passAway = passRow ? normalizeValue(passRow.away) : 0;
+      const passHome = normalizeValue(s.pass[0]);
+      const passAway = normalizeValue(s.pass[1]);
       $("pass-home").textContent = passHome.toFixed(0);
       $("pass-away").textContent = passAway.toFixed(0);
       $("bar-pass").style.width = passHome + "%";
       $("pass-meta").textContent =
         passHome > passAway ? "Circulation de balle plus propre côté domicile." : "Meilleure précision côté visiteurs.";
-
-      $("status").textContent = "Données chargées pour " + match.label;
-      renderLineups(mappedLineups);
-    } catch (e) {
-      console.error(e);
-      $("status").textContent = "Erreur de chargement Sofascore";
     }
+
+    renderLineups(mappedLineups);
   }
 
   $("match-select").addEventListener("change", updateMatch);
