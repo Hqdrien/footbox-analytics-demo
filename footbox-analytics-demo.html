@@ -701,13 +701,44 @@
     const d = match;
     const mappedLineups = d.lineups;
 
-    // Scoreboard
+    // Scoreboard + logos 100 % locaux
     const sb = d.scoreboard;
     if (sb) {
+      const makeTeamLogo = (name) => {
+        const initials = (name || "")
+          .split(" ")
+          .filter(Boolean)
+          .map(w => w[0])
+          .join("")
+          .slice(0, 3)
+          .toUpperCase();
+        const svg = `
+          <svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'>
+            <defs>
+              <linearGradient id='tg' x1='0' y1='0' x2='1' y2='1'>
+                <stop offset='0%' stop-color='#020617'/>
+                <stop offset='100%' stop-color='#1f2937'/>
+              </linearGradient>
+            </defs>
+            <circle cx='32' cy='32' r='30' fill='url(#tg)' stroke='#111827' stroke-width='2'/>
+            <text x='50%' y='50%' dy='.35em' text-anchor='middle'
+                  font-family='system-ui, -apple-system, BlinkMacSystemFont, sans-serif'
+                  font-size='18' fill='#e5e7eb' font-weight='600'>${initials}</text>
+          </svg>`;
+        return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+      };
+
+      const homeLogo = makeTeamLogo(sb.homeName);
+      const awayLogo = makeTeamLogo(sb.awayName);
+
       $("home-full-name").textContent = sb.homeName;
       $("away-full-name").textContent = sb.awayName;
       $("home-score").textContent = sb.homeScore;
       $("away-score").textContent = sb.awayScore;
+      const homeLogoEl = $("home-logo");
+      const awayLogoEl = $("away-logo");
+      if (homeLogoEl) homeLogoEl.src = homeLogo;
+      if (awayLogoEl) awayLogoEl.src = awayLogo;
       const statusEl = $("scoreboard-status");
       if (statusEl) statusEl.textContent = sb.status || "";
     }
