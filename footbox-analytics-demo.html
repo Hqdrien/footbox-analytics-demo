@@ -61,13 +61,7 @@
       text-overflow:ellipsis;
     }
     .scoreboard-logo {
-      width:28px;
-      height:28px;
-      border-radius:999px;
-      background:#020617;
-      border:1px solid #1f2937;
-      object-fit:cover;
-      flex-shrink:0;
+      display:none; /* Logos désactivés pour la démo GitHub */
     }
     .scoreboard-center {
       display:flex;
@@ -478,8 +472,8 @@
     "barca-psg": {
       label: "Barcelona vs Paris SG",
       scoreboard: {
-        homeName: "Barcelona",
-        awayName: "Paris Saint-Germain",
+        homeName: "FCB",
+        awayName: "PSG",
         homeScore: 1,
         awayScore: 2,
         status: "Fin du match"
@@ -528,8 +522,8 @@
     "strasbourg-om": {
       label: "Strasbourg vs Marseille",
       scoreboard: {
-        homeName: "RC Strasbourg",
-        awayName: "Olympique de Marseille",
+        homeName: "RCSA",
+        awayName: "OM",
         homeScore: 1,
         awayScore: 3,
         status: "Fin du match"
